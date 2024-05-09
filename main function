@@ -1,0 +1,180 @@
+#include "class.h"
+#include <windows.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main()
+{
+    UserManagement userManager;
+    Repository repo[100];
+    Friends friends[100];
+    HashTable obj;
+    User* user;
+
+    int choice, hashVal = 0, destHashVal = 0;
+    string username, password, friendName, repoName;
+
+    ifstream repoNameFile("repositorynames.txt");
+    ofstream repoNameFileOut;
+
+    do
+    {
+        try
+        {
+            system("cls");
+            printBoxMain();
+            system("Color F4");
+
+            cout << "Enter your choice: ";
+            cin >> choice;
+
+            if (cin.fail())
+            {
+                cin.clear();
+                cin.ignore(10000, '\n');
+                throw runtime_error("Invalid input. Please enter a number.");
+            }
+            switch (choice)
+            {
+            case 1:
+                cout << "User Registration\n";   // User Registration
+                cout << "Enter username: ";
+                cin >> username;
+                cout << "Enter password: ";
+                cin >> password;
+
+                hashVal = obj.gethash(username);
+                userManager.registerUser(username, password);
+
+                break;
+            case 2:
+                cout << "User Login\n";// User Login
+                cout << "Enter username: ";
+                cin >> username;
+
+                hashVal = obj.gethash(username);
+                cout << "Enter password: ";
+                cin >> password;
+
+                if (userManager.loginUser(username, password))
+                {
+                    cout << "Login successful. Welcome, " << username << "!" << endl;
+                    Sleep(500);
+                    do
+                    {
+                        printBox();
+                        cout << "Enter your choice: ";
+                        cin >> choice;
+
+                        if (cin.fail())
+                        {
+
+                            cin.clear();
+                            cin.ignore(10000, '\n');
+                            cout << "Invalid input. Please enter a number." << endl;
+                            continue;
+                        }
+
+                        switch (choice)
+                        {
+                        case 1:
+                            cout << "Enter repository name to add: ";
+                            cin.ignore();
+                            getline(cin, repoName);
+                            repo[hashVal].createRepository(repoName, hashVal);
+
+                            repoNameFileOut.open("repositorynames.txt", ios::app);
+                            if (repoNameFileOut.is_open())
+                            {
+                                repoNameFileOut << repoName << endl;
+                                repoNameFileOut.close();
+                            }
+                            else
+                            {
+                                cout << "Error: Unable to open repositorynames.txt for appending." << endl;
+                            }
+                            break;
+                        case 2:
+                            repo[hashVal].addFileToRepository(hashVal);
+                            break;
+                        case 3:
+                            cout << "Enter repository index to delete file from: ";
+                            if (!(cin >> choice))
+                            {
+                                cout << "Invalid input. Please enter a number." << endl;
+                                Sleep(1000);
+                                cin.clear();
+                                cin.ignore(10000, '\n');
+                                continue;
+                            }
+                            cin.ignore();
+
+                            repo[hashVal].deleteFileFromRepository(choice, hashVal);
+                            break;
+                        case 4:
+                            repo[hashVal].displayRepository(hashVal);
+                            break;
+                        case 5:
+                            cout << "Enter username of the friend you want to add: ";// Add Friend
+                            cin >> friendName;
+
+                            if (friendName == username)
+                            {
+                                cout << "You cannot add yourself as a friend." << endl;
+                            }
+                            else
+                            {
+                                user = userManager.getUser(friendName);// Check if the user exists in the hashtable
+                                if (user != nullptr)
+                                {
+                                    destHashVal = obj.gethash(friendName);// If the user exists, get the hash value
+                                    friends[hashVal].addFriend(username, friendName);
+                                }
+                                else
+                                {
+                                    cout << "No user exists with that name." << endl; // If the user doesn't exist, print an error message
+                                }
+                            }
+                            break;
+                        case 6:
+                            cout << "Enter username of the friend you want to unfollow: "; // Unfollow Friend
+                            cin >> friendName;
+                            friends[hashVal].unfollowFriend(username, friendName);
+                            break;
+                        case 7:
+                            friends[hashVal].displayFriends(username); // Display Friends
+                            break;
+                        case 8:
+                            userManager.logoutUser(username);
+                            cout << "Logged out successfully." << endl;
+                            break;
+
+                        default:
+                            cout << "Invalid choice. Please enter again." << endl;
+                        }
+                    } while (choice != 8);
+                }
+                else
+                {
+                    cout << "Login failed. Invalid username or password." << endl;
+                }
+                break;
+            case 3:
+                cout << "Exiting program." << endl;
+                break;
+            default:
+                cout << "Invalid choice. Please enter again." << endl;
+            }
+        }
+        catch (const exception& e)
+        {
+            cout << "Error: " << e.what() << endl;
+        }
+        system("pause");
+    } while (choice != 3);
+    system("Color F4");
+    system("pause");
+    return 0;
+}
